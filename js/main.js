@@ -12,19 +12,19 @@ function solicitarNombre() {
 
 solicitarNombre();
 
-
 document.addEventListener('DOMContentLoaded', () => {
     const paisInput = document.getElementById('pais');
     const ciudadInput = document.getElementById('ciudad');
     const seguroInput = document.getElementById('seguro');
     const resultadoDiv = document.getElementById('resultado');
+    const continuarButton = document.getElementById('continuarButton');
 
     const valorSeguro = 50000;
 
     fetch('./storage/data.json')
         .then(response => response.json())
         .then(data => {
-            const destinos = data.destinos;
+            const destinos = [...data.destinos];
 
             paisInput.addEventListener('input', () => {
                 const paisSeleccionado = paisInput.value;
@@ -70,6 +70,45 @@ document.addEventListener('DOMContentLoaded', () => {
                     resultadoDiv.textContent = `No existe información sobre el país ${paisSeleccionado}`;
                 }
             }
+
+            continuarButton.addEventListener('click', () => {
+                const nombre = localStorage.getItem('nombre');
+                const paisSeleccionado = paisInput.value;
+                const ciudadSeleccionada = ciudadInput.value;
+                const paisEncontrado = destinos.find(d => d.pais.toLowerCase() === paisSeleccionado.toLowerCase());
+
+                if (paisEncontrado) {
+                    const ciudadEncontrada = paisEncontrado.ciudades.find(c => c.nombre.toLowerCase() === ciudadSeleccionada.toLowerCase());
+
+                    if (ciudadEncontrada) {
+                        const precioViaje = ciudadEncontrada.precio;
+                        const precioTotal = seguroInput.checked ? precioViaje + valorSeguro : precioViaje;
+                        Swal.fire({
+                            title: `Resumen de viaje`,
+                            html: `<p>Nombre: ${nombre}</p>
+                                   <p>País: ${paisSeleccionado}</p>
+                                   <p>Ciudad: ${ciudadSeleccionada}</p>
+                                   <p>Precio total: $${precioTotal.toLocaleString()} (${seguroInput.checked ? 'con' : 'sin'} seguro)</p>`,
+                            icon: 'info',
+                            confirmButtonText: 'Aceptar'
+                        });
+                    } else {
+                        Swal.fire({
+                            title: 'Error',
+                            text: `No existe información sobre la ciudad ${ciudadSeleccionada}`,
+                            icon: 'error',
+                            confirmButtonText: 'Aceptar'
+                        });
+                    }
+                } else {
+                    Swal.fire({
+                        title: 'Error',
+                        text: `No existe información sobre el país ${paisSeleccionado}`,
+                        icon: 'error',
+                        confirmButtonText: 'Aceptar'
+                    });
+                }
+            });
         })
         .catch(error => console.error('Error al cargar el JSON:', error));
 });
